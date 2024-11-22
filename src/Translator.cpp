@@ -2,109 +2,126 @@
 
 
 void Translator::execute() {
-	//cout << "To exit, type in \"exit\"." << endl;
 	while (true) {
 		cout << "\033[;35m>>>\033[0m";
 		getline(cin, user_input);
-		//user_input.erase(remove_if(user_input.begin(), user_input.end(), isspace), user_input.end());	// removing spaces
 		user_input.erase(remove_if(user_input.begin(), user_input.end(), [](char c) {return c == '\t' || isspace(c); }), user_input.end());		// removing spaces and tabs
-		//if (user_input == "exit") {
-		//	break;
-		//}
 		size_t equal_sign_pos = user_input.find('=');
 		if (equal_sign_pos != user_input.npos) {
-			assignment(user_input.substr(0, equal_sign_pos), user_input.substr(equal_sign_pos + 1, user_input.size()));
+			assignment(user_input.substr(0, equal_sign_pos), user_input.substr(equal_sign_pos + 1, user_input.size()), false);
 		}
 		else {
-			output_result(user_input);
+			output_result(user_input, false);
 		}
 	}
 }
 
-void Translator::assignment(string var_name, string var_value) {
-	if (!lvalue_analysis(var_name)) {		//starts with a letter or underscore
-		cout << "\033[;31mSyntax error: invalid variable name.\033[0m" << endl;
-		return;
+void Translator::test_execute(string input) {
+	user_input = input;
+	user_input.erase(remove_if(user_input.begin(), user_input.end(), [](char c) {return c == '\t' || isspace(c); }), user_input.end());
+	size_t equal_sign_pos = user_input.find('=');
+	if (equal_sign_pos != user_input.npos) {
+		assignment(user_input.substr(0, equal_sign_pos), user_input.substr(equal_sign_pos + 1, user_input.size()), true);
 	}
-	if (!expression_analysis(var_value)) {
-		cout << "\033[;31mSyntax error: invalid expression.\033[0m" << endl;
-		return;
+	else {
+		output_result(user_input, true);
 	}
-	string val = compute_value(var_value);
-	if (val == "error") {
-		return;
-	}
-	if (val != "INF") {
-		if (val.find('.') != val.npos) {
-			double double_value = stod(val);
-			auto insert_var = make_pair(var_name, double_value);
-			bool flag = true;
-			for (auto elem : double_variables) {
-				if (elem.first == insert_var.first) {
-					flag = false;
-					elem.second = insert_var.second;
+}
+
+void Translator::assignment(string var_name, string var_value, bool is_test) {
+	try {
+		lvalue_analysis(var_name);
+		expression_analysis(var_value);
+		string val = compute_value(var_value);
+		if (val == "error") {
+			return;
+		}
+		if (val != "INF") {
+			if (val.find('.') != val.npos) {
+				double double_value = stod(val);
+				auto insert_var = make_pair(var_name, double_value);
+				bool flag = true;
+				for (auto elem : double_variables) {
+					if (elem.first == insert_var.first) {
+						flag = false;
+						elem.second = insert_var.second;
+					}
+				}
+				for (auto elem = int_variables.begin(); elem != int_variables.end(); ++elem) {
+					if ((*elem).first == insert_var.first) {
+						int_variables.erase(elem);
+						break;
+					}
+				}
+				if (flag) {
+					double_variables.push_back(insert_var);
 				}
 			}
-			for (auto elem = int_variables.begin(); elem != int_variables.end(); ++elem) {
-				if ((*elem).first == insert_var.first) {
-					int_variables.erase(elem);
-					break;
+			else {
+				int int_value = stoi(val);
+				auto insert_var = make_pair(var_name, int_value);
+				bool flag = true;
+				for (auto elem : int_variables) {
+					if (elem.first == insert_var.first) {
+						flag = false;
+						elem.second = insert_var.second;
+					}
 				}
-			}
-			if (flag) {
-				double_variables.push_back(insert_var);
+				for (auto elem = double_variables.begin(); elem != double_variables.end(); ++elem) {
+					if ((*elem).first == insert_var.first) {
+						double_variables.erase(elem);
+						break;
+					}
+				}
+				if (flag) {
+					int_variables.push_back(insert_var);
+				}
 			}
 		}
 		else {
-			int int_value = stoi(val);
-			auto insert_var = make_pair(var_name, int_value);
-			bool flag = true;
-			for (auto elem : int_variables) {
-				if (elem.first == insert_var.first) {
-					flag = false;
-					elem.second = insert_var.second;
-				}
-			}
-			for (auto elem = double_variables.begin(); elem != double_variables.end(); ++elem) {
-				if ((*elem).first == insert_var.first) {
-					double_variables.erase(elem);
-					break;
-				}
-			}
-			if (flag) {
-				int_variables.push_back(insert_var);
-			}
+			throw exception("\033[;31mRuntime error: can't divide by zero.\033[0m");
 		}
 	}
-	else {
-		cout << "\033[;31mRuntime error: can't divide by zero.\033[0m" << endl;
+	catch (exception e) {
+		if (!is_test)
+			cout << e.what() << endl;
+		else throw exception();
 	}
+
 	
 }
 
-void Translator::output_result(string expr) {
-	if (!expression_analysis(expr)) {
-		cout << "\033[;31mSyntax error: invalid expression.\033[0m" << endl;
-		return;
+void Translator::output_result(string expr, bool is_test) {
+
+	try {
+		expression_analysis(expr);
+		string val = compute_value(expr);
+		if (val == "error") {
+			return;
+		}
+		if (val != "INF") {
+			cout << "\033[;34m" << val << "\033[0m" << endl;
+		}
+		else {
+			throw exception("\033[;31mRuntime error: can't divide by zero.\033[0m");
+		}
 	}
-	string val = compute_value(expr);
-	if (val == "error") {
-		return;
-	}
-	if (val != "INF") {
-		cout << "\033[;34m" << val << "\033[0m" << endl;
-	}
-	else {
-		cout << "\033[;31mRuntime error: can't divide by zero.\033[0m" << endl;
+	catch (exception e) {
+		if (!is_test)
+			cout << e.what() << endl;
+		else throw exception();
 	}
 }
 
 string Translator::compute_value(string expr) {
 	Stack<string> operands;
 	vector<string> terms = get_terms(expr);
-	if (terms[0] == "error") {
-		cout << "\033[;31mSyntax error: there is no such variable \'" << terms[1] << "\'.\033[0m" << endl;
-		return "error";
+	if (terms[0] == "var_error") {
+		string error_text = "\033[;31mSyntax error: there is no such variable \'" + terms[1] + "\'.\033[0m";
+		throw exception(error_text.c_str());
+	}
+	else if (terms[0] == "oper_error") {
+		throw exception("\033[;31mSyntax error: invalid expression.\033[0m");
 	}
 	vector<string> polish_form;
 
@@ -315,7 +332,7 @@ vector<string> Translator::get_terms(string expr) {
 				}
 				else {
 					terms.clear();
-					terms.push_back("error");
+					terms.push_back("var_error");
 					terms.push_back(term);
 					return terms;
 				}
@@ -330,7 +347,7 @@ vector<string> Translator::get_terms(string expr) {
 				}
 				else {
 					terms.clear();
-					terms.push_back("error");
+					terms.push_back("var_error");
 					terms.push_back(term);
 					return terms;
 				}
@@ -368,13 +385,19 @@ vector<string> Translator::get_terms(string expr) {
 				terms.push_back(term);
 			else {
 				terms.clear();
-				terms.push_back("error");
+				terms.push_back("var_error");
 				terms.push_back(term);
 				return terms;
 			}
 		}
 		else
 			terms.push_back(term);
+	}
+	string last_term = terms[terms.size() - 1];
+	if (last_term == "+" || last_term == "-" || last_term == "*" || last_term == "/" || last_term == "^") {
+		terms.clear();
+		terms.push_back("oper_error");
+		terms.push_back(term);
 	}
 	return terms;
 }
@@ -393,29 +416,26 @@ bool Translator::check_variable_term(string term) {
 	return false;
 }
 
-bool Translator::lvalue_analysis(string lvalue) {
+
+void Translator::lvalue_analysis(string lvalue) {
 	if (!(isalpha(lvalue[0]) || lvalue[0] == '_')) {
-		return false;
+		throw exception("\033[;31mSyntax error: invalid variable name.\033[0m");
 
 	}
 	for (char c : lvalue) {
 		if (!(isalpha(c) || isdigit(c) || c == '_')) {
-			return false;
+			throw exception("\033[;31mSyntax error: invalid variable name.\033[0m");
 		}
 	}
-	return true;
 }
 
 
-bool Translator::expression_analysis(string expr) {
+void Translator::expression_analysis(string expr) {
 	int state = STATE_INIT;
 	int bracket_counter = 0;
 	for (char c : expr) {
 		switch (state) {
 		case STATE_INIT:
-			//if (c == '\0') {
-			//	state = BRACKET_CHECK;
-			//}
 			if (c == '(') {
 				bracket_counter++;
 			}
@@ -430,9 +450,6 @@ bool Translator::expression_analysis(string expr) {
 			}
 			break;
 		case STATE_OPERAND:
-			//if (c == '\0') {
-			//	state = BRACKET_CHECK;
-			//}
 			if (c == ')') {
 				bracket_counter--;
 				if (bracket_counter < 0) {
@@ -453,9 +470,6 @@ bool Translator::expression_analysis(string expr) {
 			if (isdigit(c)) {
 				state = STATE_NUM_DOUBLE;
 			}
-			//else if (c == '\0') {
-			//	state = BRACKET_CHECK;
-			//}
 			else if (c == ')') {
 				bracket_counter--;
 				if (bracket_counter < 0) {
@@ -476,9 +490,6 @@ bool Translator::expression_analysis(string expr) {
 			if (isalpha(c) || c == '_' || isdigit(c)) {
 				state = STATE_VAR;
 			}
-			//else if (c == '\0') {
-			//	state = BRACKET_CHECK;
-			//}
 			else if (c == ')') {
 				bracket_counter--;
 				if (bracket_counter < 0) {
@@ -496,9 +507,6 @@ bool Translator::expression_analysis(string expr) {
 			}
 			break;
 		case STATE_NUM_INT:
-			//if (c == '\0') {
-			//	state = BRACKET_CHECK;
-			//}
 			if (c == ')') {
 				bracket_counter--;
 				if (bracket_counter < 0) {
@@ -522,7 +530,7 @@ bool Translator::expression_analysis(string expr) {
 			}
 			break;
 		case STATE_ERROR:
-			return false;
+			throw exception("\033[;31mSyntax error: invalid expression.\033[0m");
 		}
 		
 	}
@@ -530,7 +538,6 @@ bool Translator::expression_analysis(string expr) {
 		state = STATE_ERROR;
 	}
 	if (state == STATE_ERROR) {
-		return false;
+		throw exception("\033[;31mSyntax error: invalid expression.\033[0m");
 	}
-	return true;
 }

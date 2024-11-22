@@ -6,6 +6,7 @@
 #include <algorithm>
 #include <cctype>
 #include <cmath>
+#include <exception>
 #include "Stack.h"
 
 using namespace std;
@@ -25,22 +26,24 @@ class Translator {
 	vector<pair<string, int>> int_variables;
 	vector<pair<string, double>> double_variables;
 
-	void assignment(string var_name, string var_value);
+	void assignment(string var_name, string var_value, bool is_test);
+
+	void output_result(string expr, bool is_test);
+
+	void lvalue_analysis(string lvalue);
+
+	void expression_analysis(string expr);
+
+	string compute_value(string expr);
 
 	vector<string> get_terms(string expr);
 
 	int priority(string term);
 
-	string compute_value(string expr);
-
-	bool lvalue_analysis(string lvalue);
-
-	bool expression_analysis(string expr);
-
-	void output_result(string expr);
-
 	bool check_variable_term(string term);
 
 public:
 	void execute();
+
+	void test_execute(string input);
 };
