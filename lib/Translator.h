@@ -5,6 +5,7 @@
 #include <utility>
 #include <algorithm>
 #include <cctype>
+#include <cmath>
 #include "Stack.h"
 
 using namespace std;
@@ -12,13 +13,12 @@ using namespace std;
 class Translator {
 
 	enum {
-		INIT,
-		OPERAND,
-		BRACKET_CHECK,
-		ERROR,
-		NUM_DOUBLE,
-		VAR,
-		NUM_INT
+		STATE_INIT,
+		STATE_OPERAND,
+		STATE_ERROR,
+		STATE_NUM_DOUBLE,
+		STATE_VAR,
+		STATE_NUM_INT
 	} STATES;
 
 	string user_input;
