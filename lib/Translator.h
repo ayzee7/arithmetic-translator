@@ -26,9 +26,9 @@ class Translator {
 	vector<pair<string, int>> int_variables;
 	vector<pair<string, double>> double_variables;
 
-	void assignment(string var_name, string var_value, bool is_test);
+	double assignment(string var_name, string var_value, bool is_test);
 
-	void output_result(string expr, bool is_test);
+	double output_result(string expr, bool is_test);
 
 	void lvalue_analysis(string lvalue);
 
@@ -45,5 +45,5 @@ class Translator {
 public:
 	void execute();
 
-	void test_execute(string input);
+	double test_execute(string input);
 };

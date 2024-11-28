@@ -16,32 +16,31 @@ void Translator::execute() {
 	}
 }
 
-void Translator::test_execute(string input) {
+double Translator::test_execute(string input) {
 	user_input = input;
 	user_input.erase(remove_if(user_input.begin(), user_input.end(), [](char c) {return c == '\t' || isspace(c); }), user_input.end());
 	size_t equal_sign_pos = user_input.find('=');
+	double result = 0;
 	if (equal_sign_pos != user_input.npos) {
-		assignment(user_input.substr(0, equal_sign_pos), user_input.substr(equal_sign_pos + 1, user_input.size()), true);
+		result = assignment(user_input.substr(0, equal_sign_pos), user_input.substr(equal_sign_pos + 1, user_input.size()), true);
 	}
 	else {
-		output_result(user_input, true);
+		result = output_result(user_input, true);
 	}
+	return result;
 }
 
-void Translator::assignment(string var_name, string var_value, bool is_test) {
+double Translator::assignment(string var_name, string var_value, bool is_test) {
 	try {
 		lvalue_analysis(var_name);
 		expression_analysis(var_value);
 		string val = compute_value(var_value);
-		if (val == "error") {
-			return;
-		}
 		if (val != "INF") {
 			if (val.find('.') != val.npos) {
 				double double_value = stod(val);
 				auto insert_var = make_pair(var_name, double_value);
 				bool flag = true;
-				for (auto elem : double_variables) {
+				for (auto& elem : double_variables) {
 					if (elem.first == insert_var.first) {
 						flag = false;
 						elem.second = insert_var.second;
@@ -56,12 +55,15 @@ void Translator::assignment(string var_name, string var_value, bool is_test) {
 				if (flag) {
 					double_variables.push_back(insert_var);
 				}
+				if (is_test) {
+					return insert_var.second;
+				}
 			}
 			else {
 				int int_value = stoi(val);
 				auto insert_var = make_pair(var_name, int_value);
 				bool flag = true;
-				for (auto elem : int_variables) {
+				for (auto& elem : int_variables) {
 					if (elem.first == insert_var.first) {
 						flag = false;
 						elem.second = insert_var.second;
@@ -75,6 +77,9 @@ void Translator::assignment(string var_name, string var_value, bool is_test) {
 				}
 				if (flag) {
 					int_variables.push_back(insert_var);
+				}
+				if (is_test) {
+					return insert_var.second;
 				}
 			}
 		}
@@ -91,16 +96,19 @@ void Translator::assignment(string var_name, string var_value, bool is_test) {
 	
 }
 
-void Translator::output_result(string expr, bool is_test) {
+double Translator::output_result(string expr, bool is_test) {
 
 	try {
 		expression_analysis(expr);
 		string val = compute_value(expr);
-		if (val == "error") {
-			return;
-		}
 		if (val != "INF") {
-			cout << "\033[;34m" << val << "\033[0m" << endl;
+			if (is_test) {
+				return stod(val);
+			}
+			else {
+				cout << "\033[;34m" << val << "\033[0m" << endl;
+			}
+			
 		}
 		else {
 			throw exception("\033[;31mRuntime error: can't divide by zero.\033[0m");
@@ -157,8 +165,10 @@ string Translator::compute_value(string expr) {
 				operands.push(term);
 			}
 			else {
-				while (priority(operands.top()) >= priority(term) && operands.top() != "(") {
-					polish_form.push_back(operands.pop());
+				while (!operands.empty()) {
+					if (priority(operands.top()) >= priority(term) && operands.top() != "(")
+						polish_form.push_back(operands.pop());
+					else break;
 				}
 				operands.push(term);
 			}
@@ -431,6 +441,9 @@ void Translator::lvalue_analysis(string lvalue) {
 
 
 void Translator::expression_analysis(string expr) {
+	if (expr.empty()) {
+		throw exception("\033[;31mSyntax error: expression cannot be empty.\033[0m");
+	}
 	int state = STATE_INIT;
 	int bracket_counter = 0;
 	for (char c : expr) {
