@@ -1,6 +1,7 @@
 #include <gtest.h>
 #include "Translator.h"
 
+
 //	Object-oriented tests
 TEST(translator_basic, can_create_translator) {
 	ASSERT_NO_THROW(Translator t);
@@ -10,6 +11,7 @@ TEST(translator_basic, can_perform_expression) {
 	Translator t;
 	ASSERT_NO_THROW(t.test_execute("1"));
 }
+
 
 //	Assignment operation tests
 TEST(translator_assignment, can_create_integer_variable) {
@@ -263,3 +265,4 @@ TEST(translator_analysis, throws_when_meets_two_consecutive_operation_signs) {
 	Translator t;
 	ASSERT_ANY_THROW(t.test_execute("1+*"));
 }
+

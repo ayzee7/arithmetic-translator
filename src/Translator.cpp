@@ -16,7 +16,7 @@ void Translator::execute() {
 	}
 }
 
-double Translator::test_execute(string input) {
+double Translator::test_execute(string input) {											//	Performs operations with given string
 	user_input = input;
 	user_input.erase(remove_if(user_input.begin(), user_input.end(), [](char c) {return c == '\t' || isspace(c); }), user_input.end());
 	size_t equal_sign_pos = user_input.find('=');
@@ -30,12 +30,12 @@ double Translator::test_execute(string input) {
 	return result;
 }
 
-double Translator::assignment(string var_name, string var_value, bool is_test) {
+double Translator::assignment(string var_name, string var_value, bool is_test) {		//	Performs assignment for variables
 	try {
 		lvalue_analysis(var_name);
 		expression_analysis(var_value);
 		string val = compute_value(var_value);
-		if (val != "INF") {
+		if (val != "INF") {																//	Checks if expression has no division by zero
 			if (val.find('.') != val.npos) {
 				double double_value = stod(val);
 				auto insert_var = make_pair(var_name, double_value);
@@ -92,11 +92,9 @@ double Translator::assignment(string var_name, string var_value, bool is_test) {
 			cout << e.what() << endl;
 		else throw exception();
 	}
-
-	
 }
 
-double Translator::output_result(string expr, bool is_test) {
+double Translator::output_result(string expr, bool is_test) {		//	Calculates arithmetic expression and outputs result
 
 	try {
 		expression_analysis(expr);
@@ -121,7 +119,7 @@ double Translator::output_result(string expr, bool is_test) {
 	}
 }
 
-string Translator::compute_value(string expr) {
+string Translator::compute_value(string expr) {						//	Expression value computation
 	Stack<string> operands;
 	vector<string> terms = get_terms(expr);
 	if (terms[0] == "var_error") {
@@ -131,6 +129,8 @@ string Translator::compute_value(string expr) {
 	else if (terms[0] == "oper_error") {
 		throw exception("\033[;31mSyntax error: invalid expression.\033[0m");
 	}
+
+	//	Turning expression to polish form
 	vector<string> polish_form;
 
 	for (auto term : terms) {
@@ -185,6 +185,8 @@ string Translator::compute_value(string expr) {
 		}
 	}
 
+
+	//	Calculating result
 	string res;
 	
 	if (is_double) {
@@ -258,7 +260,7 @@ string Translator::compute_value(string expr) {
 	return res;
 }
 
-int Translator::priority(string term) {
+int Translator::priority(string term) {					//	Returns priority of arithmetic sign
 	int ret = 0;
 	if (term == "+" || term == "-") {
 		ret = 0;
@@ -272,10 +274,11 @@ int Translator::priority(string term) {
 	return ret;
 }
 
-vector<string> Translator::get_terms(string expr) {
+vector<string> Translator::get_terms(string expr) {		//	Expression lexical analysis and splits expression into tokens
 	int state = STATE_INIT;
 	vector<string> terms;
 	string term;
+
 	for (char c : expr) {
 		switch (state) {
 		case STATE_INIT:
@@ -286,7 +289,7 @@ vector<string> Translator::get_terms(string expr) {
 				term.push_back(c);
 				state = STATE_NUM_INT;
 			}
-			else if (isalpha(c) || c == '_') {		//is a variable
+			else if (isalpha(c) || c == '_') {			//is a variable
 				term.push_back(c);
 				state = STATE_VAR;
 			}
@@ -412,7 +415,7 @@ vector<string> Translator::get_terms(string expr) {
 	return terms;
 }
 
-bool Translator::check_variable_term(string term) {
+bool Translator::check_variable_term(string term) {			//	Checks if a variable is initialized
 	for (auto elem : double_variables) {
 		if (elem.first == term) {
 			return true;
@@ -427,12 +430,12 @@ bool Translator::check_variable_term(string term) {
 }
 
 
-void Translator::lvalue_analysis(string lvalue) {
-	if (!(isalpha(lvalue[0]) || lvalue[0] == '_')) {
+void Translator::lvalue_analysis(string lvalue) {			//	Variable name analysis
+	if (!(isalpha(lvalue[0]) || lvalue[0] == '_')) {		//	Checks first symbol
 		throw exception("\033[;31mSyntax error: invalid variable name.\033[0m");
 
 	}
-	for (char c : lvalue) {
+	for (char c : lvalue) {		//	Checks other symbols
 		if (!(isalpha(c) || isdigit(c) || c == '_')) {
 			throw exception("\033[;31mSyntax error: invalid variable name.\033[0m");
 		}
@@ -440,7 +443,7 @@ void Translator::lvalue_analysis(string lvalue) {
 }
 
 
-void Translator::expression_analysis(string expr) {
+void Translator::expression_analysis(string expr) {			//	Expression syntax analysis
 	if (expr.empty()) {
 		throw exception("\033[;31mSyntax error: expression cannot be empty.\033[0m");
 	}
@@ -452,10 +455,10 @@ void Translator::expression_analysis(string expr) {
 			if (c == '(') {
 				bracket_counter++;
 			}
-			else if (isdigit(c)) {		//is a number
+			else if (isdigit(c)) {							//is a number
 				state = STATE_NUM_INT;
 			}
-			else if (isalpha(c) || c == '_') {		//is a variable
+			else if (isalpha(c) || c == '_') {				//is a variable
 				state = STATE_VAR;
 			}
 			else {
