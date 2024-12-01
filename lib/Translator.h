@@ -23,27 +23,27 @@ class Translator {
 	} STATES;
 
 	string user_input;
-	vector<pair<string, int>> int_variables;
-	vector<pair<string, double>> double_variables;
+	vector<pair<string, int>> int_variables;		//	Container for initialized integer variables
+	vector<pair<string, double>> double_variables;		//	Container for initialized floating point variables
 
-	void assignment(string var_name, string var_value, bool is_test);
+	double assignment(string var_name, string var_value, bool is_test);		//	Performs assignment for variables
 
-	void output_result(string expr, bool is_test);
+	double output_result(string expr, bool is_test);		//	Calculates arithmetic expression and outputs result
 
-	void lvalue_analysis(string lvalue);
+	void lvalue_analysis(string lvalue);		//	Variable name analysis
 
-	void expression_analysis(string expr);
+	void expression_analysis(string expr);		//	Expression syntax analysis
 
-	string compute_value(string expr);
+	string compute_value(string expr);		//	Expression value computation
 
-	vector<string> get_terms(string expr);
+	vector<string> get_terms(string expr);		//	Expression lexical analysis and splits expression into tokens
 
-	int priority(string term);
+	int priority(string term);		//	Returns priority of arithmetic sign
 
-	bool check_variable_term(string term);
+	bool check_variable_term(string term);		//	Checks if a variable is initialized
 
 public:
 	void execute();
 
-	void test_execute(string input);
+	double test_execute(string input);		//	Performs operations with given string
 };
